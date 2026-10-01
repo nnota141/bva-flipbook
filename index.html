@@ -913,6 +913,18 @@ async function renderBook() {
       animating = false;
       return;
     }
+
+    // Keep the final PDF page on its own sheet. With a standalone cover,
+    // an odd page count needs a blank sheet immediately before the back page.
+    if (!mobile && pdf.numPages > 1 && pdf.numPages % 2 === 1 && number === pdf.numPages) {
+      const blank = document.createElement("div");
+      blank.className = "page blank-page";
+      blank.dataset.density = "soft";
+      blank.style.width = `${pageWidth}px`;
+      blank.style.height = `${pageHeight}px`;
+      pages.push(blank);
+    }
+
     const element = await makePage(number, pageWidth);
     if (element) pages.push(element);
   }
@@ -930,9 +942,11 @@ async function renderBook() {
     maxWidth: 1200,
     minHeight: 160,
     maxHeight: 1600,
-    showCover: false,
+    showCover: !mobile,
     usePortrait: mobile,
-    startPage: firstPage - 1,
+    startPage: (!mobile && pdf.numPages > 1 && pdf.numPages % 2 === 1 && firstPage === pdf.numPages)
+      ? firstPage
+      : firstPage - 1,
     drawShadow: true,
     maxShadowOpacity: 0.42,
     flippingTime: 650,
@@ -946,7 +960,12 @@ async function renderBook() {
   pageFlip.on("flip", event => {
     if (!pdf || !pageFlip) return;
     const index = Number(event.data);
-    page = Math.min(pdf.numPages, Math.max(1, index + 1));
+    const hasInsertedBlank = !mobile && pdf.numPages > 1 && pdf.numPages % 2 === 1;
+    // The inserted blank sheet sits before the last PDF page and is not a
+    // document page; keep the counter on the preceding real page while it shows.
+    page = hasInsertedBlank && index === pdf.numPages - 1
+      ? pdf.numPages - 1
+      : Math.min(pdf.numPages, Math.max(1, index + 1 - (hasInsertedBlank && index > pdf.numPages - 1 ? 1 : 0)));
     updateUI();
   });
 
