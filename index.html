@@ -1,63 +1,85 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Flipbook</title>
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BVA Document Library</title>
+
+<style>
 :root {
   --bg: #0d0f12;
-  --panel: rgba(23, 26, 31, .92);
-  --panel-border: rgba(255,255,255,.08);
+  --panel: rgba(23,26,31,.96);
+  --border: rgba(255,255,255,.09);
   --text: #f4f5f7;
   --muted: #9298a3;
-  --accent: #fff;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+body {
   margin: 0;
-  width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 40%, #20242a 0%, #0d0f12 58%);
   color: var(--text);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  background: radial-gradient(circle at 50% 40%, #20242a, #0d0f12 65%);
 }
 
-button, a { font: inherit; }
+button {
+  font: inherit;
+}
+
+/* TOP BAR */
 
 .topbar {
+  height: 68px;
   position: fixed;
-  z-index: 50;
   top: 0;
   left: 0;
   right: 0;
-  height: 68px;
+  z-index: 20;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 22px;
   background: var(--panel);
-  border-bottom: 1px solid var(--panel-border);
+  border-bottom: 1px solid var(--border);
   backdrop-filter: blur(18px);
 }
 
-.brand { display: flex; align-items: center; gap: 11px; min-width: 180px; }
-.brand-mark {
-  width: 36px; height: 36px;
-  display: grid; place-items: center;
-  border-radius: 9px;
-  background: #fff;
-  color: #111;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .5px;
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
 }
-.brand strong { display: block; font-size: 14px; }
-.brand span { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: white;
+  color: #111;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.brand strong {
+  display: block;
+  font-size: 14px;
+}
+
+.brand span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 3px;
+}
 
 .toolbar {
   display: flex;
@@ -66,61 +88,163 @@ button, a { font: inherit; }
 }
 
 .toolbar button {
-  width: 34px;
   height: 34px;
-  border: 1px solid var(--panel-border);
+  min-width: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: rgba(255,255,255,.055);
+  background: rgba(255,255,255,.05);
   color: var(--text);
   cursor: pointer;
-  transition: .18s ease;
+  transition: .2s;
 }
-.toolbar button:hover { background: rgba(255,255,255,.12); }
-.toolbar button:disabled { opacity: .3; cursor: default; }
+
+.toolbar button:hover {
+  background: rgba(255,255,255,.13);
+}
+
+.toolbar button:disabled {
+  opacity: .3;
+  cursor: default;
+}
 
 #pageInfo {
   min-width: 90px;
   text-align: center;
-  color: #c7cad0;
   font-size: 12px;
+  color: #c7cad0;
 }
 
-.divider {
+.separator {
   width: 1px;
   height: 23px;
-  background: var(--panel-border);
+  background: var(--border);
   margin: 0 7px;
 }
 
-.viewer {
-  position: absolute;
+/* SIDEBAR */
+
+.sidebar {
+  position: fixed;
+  z-index: 10;
   top: 68px;
   bottom: 48px;
   left: 0;
-  right: 0;
-  overflow: hidden;
+  width: 250px;
+  padding: 22px 14px;
+  overflow-y: auto;
+  background: rgba(18,20,25,.95);
+  border-right: 1px solid var(--border);
+}
+
+.sidebar-heading {
+  margin: 0 10px 12px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.doc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.doc-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #d3d6dc;
+  text-align: left;
+  cursor: pointer;
+  transition: .18s;
+}
+
+.doc-button:hover {
+  background: rgba(255,255,255,.055);
+}
+
+.doc-button.active {
+  background: rgba(255,255,255,.11);
+  border-color: rgba(255,255,255,.1);
+  color: white;
+}
+
+.doc-icon {
+  width: 34px;
+  height: 38px;
+  flex: 0 0 34px;
   display: grid;
   place-items: center;
+  border-radius: 6px;
+  background: rgba(255,255,255,.07);
+  color: #d8dce3;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.doc-button.active .doc-icon {
+  background: white;
+  color: #111;
+}
+
+.doc-text {
+  min-width: 0;
+}
+
+.doc-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.doc-subtitle {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 20px 8px;
+}
+
+.status {
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+  margin: 20px 5px;
+  line-height: 1.6;
+}
+
+/* PDF VIEWER */
+
+.viewer {
+  position: fixed;
+  top: 68px;
+  right: 0;
+  bottom: 48px;
+  left: 250px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
 
 .stage {
-  position: relative;
-  width: min(94vw, 1500px);
-  height: min(88vh, 900px);
+  width: 96%;
+  height: 94%;
   display: grid;
   place-items: center;
   perspective: 2200px;
-  overflow: visible;
-}
-
-.book-shadow {
-  position: absolute;
-  width: 72%;
-  height: 76%;
-  border-radius: 50%;
-  background: rgba(0,0,0,.55);
-  filter: blur(42px);
-  transform: translateY(6%);
 }
 
 .book {
@@ -132,15 +256,22 @@ button, a { font: inherit; }
   max-width: 96%;
   max-height: 94%;
   transform-origin: center center;
-  transition: transform .2s ease;
+}
+
+.book-shadow {
+  position: absolute;
+  width: 65%;
+  height: 65%;
+  border-radius: 50%;
+  background: rgba(0,0,0,.5);
+  filter: blur(45px);
 }
 
 .page {
   position: relative;
-  background: #fff;
   overflow: hidden;
+  background: white;
   box-shadow: 0 16px 50px rgba(0,0,0,.4);
-  transform-style: preserve-3d;
 }
 
 .page canvas {
@@ -159,133 +290,355 @@ button, a { font: inherit; }
   border-left: 1px solid rgba(0,0,0,.15);
 }
 
+/* EMPTY STATE */
+
 .empty-state {
-  width: min(520px, 85vw);
-  padding: 55px 40px;
+  width: min(500px, 90%);
+  padding: 45px 30px;
   text-align: center;
-  border: 1px solid rgba(255,255,255,.1);
-  border-radius: 18px;
-  background: rgba(25,28,34,.9);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #191c22;
   box-shadow: 0 30px 80px rgba(0,0,0,.35);
 }
+
 .empty-icon {
-  display: inline-grid;
+  width: 60px;
+  height: 60px;
+  display: grid;
   place-items: center;
-  width: 64px; height: 64px;
-  border-radius: 15px;
-  background: #fff;
+  margin: auto;
+  border-radius: 14px;
+  background: white;
   color: #111;
   font-weight: 900;
-  font-size: 15px;
 }
-.empty-state h1 { margin: 20px 0 8px; font-size: 24px; }
-.empty-state p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 14px; }
-code { color: #fff; }
+
+.empty-state h2 {
+  margin: 18px 0 8px;
+  font-size: 21px;
+}
+
+.empty-state p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.empty-state code {
+  color: white;
+  overflow-wrap: anywhere;
+}
+
+/* BOTTOM BAR */
 
 .bottombar {
   position: fixed;
-  z-index: 50;
-  left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 22px;
+  padding: 0 20px;
   color: var(--muted);
   background: var(--panel);
-  border-top: 1px solid var(--panel-border);
-  backdrop-filter: blur(18px);
+  border-top: 1px solid var(--border);
   font-size: 11px;
 }
-.bottombar a { color: #d5d8dd; text-decoration: none; }
-.bottombar a:hover { text-decoration: underline; }
 
-.turn-next .right-page { animation: turnNext .55s ease both; }
-.turn-prev .left-page { animation: turnPrev .55s ease both; }
+.bottombar a {
+  color: #d5d8dd;
+  text-decoration: none;
+}
+
+.turn-next .right-page {
+  animation: turnNext .55s ease both;
+}
+
+.turn-prev .left-page {
+  animation: turnPrev .55s ease both;
+}
 
 @keyframes turnNext {
-  0% { transform: rotateY(0); transform-origin: left center; }
-  50% { transform: rotateY(-88deg); }
-  100% { transform: rotateY(0); }
+  0% {
+    transform: rotateY(0);
+    transform-origin: left center;
+  }
+  50% {
+    transform: rotateY(-88deg);
+  }
+  100% {
+    transform: rotateY(0);
+  }
 }
+
 @keyframes turnPrev {
-  0% { transform: rotateY(0); transform-origin: right center; }
-  50% { transform: rotateY(88deg); }
-  100% { transform: rotateY(0); }
+  0% {
+    transform: rotateY(0);
+    transform-origin: right center;
+  }
+  50% {
+    transform: rotateY(88deg);
+  }
+  100% {
+    transform: rotateY(0);
+  }
 }
 
-@media (max-width: 800px) {
-  .topbar { padding: 0 10px; }
-  .brand { min-width: auto; }
-  .brand > div:last-child { display: none; }
-  .toolbar { gap: 3px; }
-  .toolbar button { width: 32px; height: 32px; }
-  #pageInfo { min-width: 72px; font-size: 11px; }
-  .divider { margin: 0 3px; }
-  .hint { display: none; }
-  .bottombar { justify-content: center; }
-  .book { max-width: 98%; }
+/* RESPONSIVE */
+
+@media (max-width: 850px) {
+  .sidebar {
+    width: 190px;
+    padding: 15px 8px;
+  }
+
+  .viewer {
+    left: 190px;
+  }
+
+  .doc-button {
+    gap: 8px;
+    padding: 9px 7px;
+  }
+
+  .doc-icon {
+    width: 30px;
+    flex-basis: 30px;
+  }
+
+  .toolbar {
+    gap: 3px;
+  }
 }
 
-@media (max-width: 520px) {
-  .viewer { bottom: 40px; }
-  .topbar { height: 60px; }
-  .viewer { top: 60px; }
-  .toolbar button:nth-of-type(5),
-  .toolbar button:nth-of-type(6) { display: none; }
-  .book { width: 96vw; }
-}
+@media (max-width: 600px) {
+  .topbar {
+    height: 58px;
+    padding: 0 9px;
+  }
 
-  </style>
+  .brand span,
+  .brand strong {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .toolbar button {
+    min-width: 30px;
+    height: 31px;
+    padding: 0 5px;
+  }
+
+  #pageInfo {
+    min-width: 65px;
+    font-size: 10px;
+  }
+
+  .separator {
+    margin: 0 2px;
+  }
+
+  .sidebar {
+    top: 58px;
+    bottom: 40px;
+    width: 68px;
+    padding: 12px 5px;
+  }
+
+  .sidebar-heading {
+    display: none;
+  }
+
+  .doc-button {
+    justify-content: center;
+    padding: 8px 3px;
+  }
+
+  .doc-icon {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+
+  .doc-text {
+    display: none;
+  }
+
+  .section-divider {
+    margin: 12px 4px;
+  }
+
+  .viewer {
+    top: 58px;
+    bottom: 40px;
+    left: 68px;
+  }
+
+  .stage {
+    width: 98%;
+    height: 92%;
+  }
+
+  .book {
+    max-width: 98%;
+  }
+
+  .bottombar {
+    height: 40px;
+    justify-content: center;
+  }
+
+  .bottombar .hint {
+    display: none;
+  }
+}
+</style>
 </head>
+
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark">PDF</div>
-      <div>
-        <strong>Document Viewer</strong>
-        <span>Flipbook</span>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">BVA</div>
+    <div>
+      <strong>Bulgarian Virtual Airlines</strong>
+      <span>Operations Document Library</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button id="prevBtn" title="Previous page">‹</button>
+    <span id="pageInfo">Select a document</span>
+    <button id="nextBtn" title="Next page">›</button>
+    <span class="separator"></span>
+    <button id="zoomOut" title="Zoom out">−</button>
+    <button id="zoomReset" title="Reset zoom">100%</button>
+    <button id="zoomIn" title="Zoom in">+</button>
+    <button id="fullscreenBtn" title="Fullscreen">⛶</button>
+  </div>
+</header>
+
+<aside class="sidebar">
+  <p class="sidebar-heading">Operations</p>
+  <div class="doc-list" id="operationsList"></div>
+
+  <div class="section-divider"></div>
+
+  <p class="sidebar-heading">Airport Briefings</p>
+  <div class="doc-list" id="airportsList"></div>
+
+  <div id="status" class="status">Select a document to begin.</div>
+</aside>
+
+<main class="viewer">
+  <div class="stage" id="stage">
+    <div class="book-shadow"></div>
+    <div class="book" id="book">
+      <div class="empty-state">
+        <div class="empty-icon">BVA</div>
+        <h2>Document Library</h2>
+        <p>Select an Operations Manual or Airport Briefing from the sidebar.</p>
       </div>
     </div>
+  </div>
+</main>
 
-    <div class="toolbar">
-      <button id="prevBtn" title="Previous page">‹</button>
-      <span id="pageInfo">Loading…</span>
-      <button id="nextBtn" title="Next page">›</button>
-      <span class="divider"></span>
-      <button id="zoomOut" title="Zoom out">−</button>
-      <button id="zoomReset" title="Reset zoom">100%</button>
-      <button id="zoomIn" title="Zoom in">+</button>
-      <button id="fullscreenBtn" title="Fullscreen">⛶</button>
-    </div>
-  </header>
+<footer class="bottombar">
+  <span class="hint">← → Navigate · Space to turn page · + / − Zoom · F Fullscreen</span>
+  <span>Bulgarian Virtual Airlines</span>
+</footer>
 
-  <main class="viewer">
-    <div class="stage" id="stage">
-      <div class="book-shadow"></div>
-      <div class="book" id="book">
-        <div class="empty-state" id="emptyState">
-          <div class="empty-icon">PDF</div>
-          <h1>PDF Flipbook</h1>
-          <p>Place your PDF at <code>pdf/document.pdf</code> and reload this page.</p>
-        </div>
-      </div>
-    </div>
-  </main>
+<script type="module">
+/* ==========================================================
+   BVA DOCUMENT CONFIGURATION
 
-  <footer class="bottombar">
-    <div class="hint">← → to navigate · Space to turn page · Pinch or scroll to zoom</div>
-    <a href="https://github.com/" target="_blank" rel="noopener">GitHub Pages ready</a>
-  </footer>
+   enabled: true  = document is shown
+   enabled: false = document is hidden
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs" type="module"></script>
-  <script type="module">
-const PDF_URL = "pdf/document.pdf";
+   PDF files go inside the "pdf" folder.
+
+   Operations filenames:
+   BVA OM-A.pdf
+   BVA OM-B.pdf
+
+   Airport filename:
+   (ICAO) Briefing.pdf
+
+   Add airports by copying an entry in the airports array.
+   ========================================================== */
+
+const DOCUMENTS = {
+  operations: [
+    {
+      id: "om-a",
+      title: "OM-A",
+      subtitle: "Operations Manual Part A",
+      filename: "BVA OM-A.pdf",
+      enabled: true
+    },
+    {
+      id: "om-b",
+      title: "OM-B",
+      subtitle: "Operations Manual Part B",
+      filename: "BVA OM-B.pdf",
+      enabled: true
+    }
+  ],
+
+  airports: [
+    {
+      id: "lbwn",
+      icao: "LBWN",
+      name: "Varna Airport",
+      enabled: true
+    },
+    {
+      id: "lbbg",
+      icao: "LBBG",
+      name: "Burgas Airport",
+      enabled: true
+    },
+    {
+      id: "lbsf",
+      icao: "LBSF",
+      name: "Sofia Airport",
+      enabled: true
+    }
+
+    /*
+    ADD NEW AIRPORT BRIEFINGS HERE:
+
+    ,{
+      id: "eddm",
+      icao: "EDDM",
+      name: "Munich Airport",
+      enabled: true
+    }
+
+    Add the file:
+    pdf/EDDM Briefing.pdf
+    */
+  ]
+};
+
+/* ==========================================================
+   VIEWER ENGINE
+   ========================================================== */
+
+const PDF_BASE = "pdf/";
 
 const book = document.getElementById("book");
 const stage = document.getElementById("stage");
 const pageInfo = document.getElementById("pageInfo");
-const emptyState = document.getElementById("emptyState");
+const status = document.getElementById("status");
 
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
@@ -294,198 +647,485 @@ const zoomOut = document.getElementById("zoomOut");
 const zoomReset = document.getElementById("zoomReset");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
+let pdfjsLib;
 let pdf = null;
+let currentDoc = null;
 let page = 1;
 let scale = 1;
 let animating = false;
-let mobile = window.innerWidth <= 800;
+let mobile = window.innerWidth <= 600;
+let loadToken = 0;
 
-const params = new URLSearchParams(location.search);
-if (params.get("page")) page = Math.max(1, parseInt(params.get("page"), 10) || 1);
-
-async function loadPdf() {
+async function initialize() {
   try {
-    const pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs");
+    pdfjsLib = await import(
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs"
+    );
+
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
 
-    pdf = await pdfjsLib.getDocument(PDF_URL).promise;
-    emptyState.remove();
-    await renderBook();
+    buildNavigation();
+
+    const params = new URLSearchParams(location.search);
+    const requestedId = params.get("doc");
+    const requestedPage = parseInt(params.get("page"), 10);
+
+    const enabledDocs = getEnabledDocuments();
+
+    const initialDoc =
+      enabledDocs.find(d => d.id === requestedId) || enabledDocs[0];
+
+    if (initialDoc) {
+      page = Number.isFinite(requestedPage)
+        ? Math.max(1, requestedPage)
+        : 1;
+
+      await selectDocument(initialDoc);
+    }
   } catch (error) {
     console.error(error);
-    pageInfo.textContent = "PDF not found";
+    status.textContent = "Unable to load the PDF viewer engine.";
   }
 }
 
+function getEnabledDocuments() {
+  const operations = DOCUMENTS.operations
+    .filter(d => d.enabled)
+    .map(d => ({ ...d, type: "operations" }));
+
+  const airports = DOCUMENTS.airports
+    .filter(d => d.enabled)
+    .map(d => ({
+      ...d,
+      type: "airport",
+      title: d.icao,
+      subtitle: d.name || "Airport Briefing",
+      filename: `${d.icao} Briefing.pdf`
+    }));
+
+  return [...operations, ...airports];
+}
+
+/* BUILD SIDEBAR BUTTONS */
+
+function buildNavigation() {
+  const operationsList = document.getElementById("operationsList");
+  const airportsList = document.getElementById("airportsList");
+
+  operationsList.innerHTML = "";
+  airportsList.innerHTML = "";
+
+  const operations = DOCUMENTS.operations.filter(d => d.enabled);
+  const airports = DOCUMENTS.airports.filter(d => d.enabled);
+
+  operations.forEach(doc => {
+    operationsList.appendChild(
+      createDocumentButton({
+        ...doc,
+        type: "operations"
+      })
+    );
+  });
+
+  airports.forEach(doc => {
+    airportsList.appendChild(
+      createDocumentButton({
+        ...doc,
+        type: "airport",
+        title: doc.icao,
+        subtitle: doc.name || "Airport Briefing",
+        filename: `${doc.icao} Briefing.pdf`
+      })
+    );
+  });
+
+  if (!operations.length) {
+    operationsList.innerHTML =
+      '<div class="status">No enabled manuals.</div>';
+  }
+
+  if (!airports.length) {
+    airportsList.innerHTML =
+      '<div class="status">No enabled airport briefings.</div>';
+  }
+}
+
+function createDocumentButton(doc) {
+  const button = document.createElement("button");
+  button.className = "doc-button";
+  button.dataset.docId = doc.id;
+  button.title = `${doc.title} — ${doc.subtitle}`;
+
+  const icon = document.createElement("span");
+  icon.className = "doc-icon";
+  icon.textContent = doc.type === "airport" ? "APT" : "OM";
+
+  const textWrap = document.createElement("span");
+  textWrap.className = "doc-text";
+
+  const title = document.createElement("span");
+  title.className = "doc-title";
+  title.textContent = doc.title;
+
+  const subtitle = document.createElement("span");
+  subtitle.className = "doc-subtitle";
+  subtitle.textContent = doc.subtitle;
+
+  textWrap.append(title, subtitle);
+  button.append(icon, textWrap);
+
+  button.addEventListener("click", () => selectDocument(doc));
+
+  return button;
+}
+
+/* LOAD SELECTED DOCUMENT */
+
+async function selectDocument(doc) {
+  if (animating) return;
+
+  const thisLoad = ++loadToken;
+
+  currentDoc = doc;
+  pdf = null;
+  page = 1;
+  scale = 1;
+
+  document.querySelectorAll(".doc-button").forEach(button => {
+    button.classList.toggle(
+      "active",
+      button.dataset.docId === doc.id
+    );
+  });
+
+  book.innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">BVA</div>
+      <h2>Loading ${doc.title}</h2>
+      <p>Please wait while the document is being loaded.</p>
+    </div>
+  `;
+
+  pageInfo.textContent = "Loading…";
+  status.textContent = doc.subtitle;
+
+  const url = PDF_BASE + encodeURIComponent(doc.filename);
+
+  const newUrl = new URL(location.href);
+  newUrl.searchParams.set("doc", doc.id);
+  newUrl.searchParams.set("page", "1");
+  history.replaceState(null, "", newUrl);
+
+  try {
+    const loadedPdf = await pdfjsLib.getDocument(url).promise;
+
+    if (thisLoad !== loadToken) return;
+
+    pdf = loadedPdf;
+    await renderBook();
+
+    status.textContent =
+      `${doc.subtitle} · ${pdf.numPages} pages`;
+
+  } catch (error) {
+    if (thisLoad !== loadToken) return;
+
+    console.error("PDF loading error:", error);
+
+    book.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">PDF</div>
+        <h2>Document unavailable</h2>
+        <p>Could not load <code>${doc.filename}</code>.</p>
+        <p>Check that the PDF is in the <code>pdf/</code> folder
+        and the filename matches exactly.</p>
+      </div>
+    `;
+
+    pageInfo.textContent = "Unavailable";
+    status.textContent = "PDF could not be loaded.";
+    pdf = null;
+  }
+}
+
+/* RENDER PDF PAGES */
+
 async function renderCanvas(pdfPage, canvas, targetWidth) {
   const base = pdfPage.getViewport({ scale: 1 });
+
+  const ratio = targetWidth / base.width;
+
   const viewport = pdfPage.getViewport({
-    scale: (targetWidth / base.width) * window.devicePixelRatio
+    scale: ratio * Math.min(window.devicePixelRatio || 1, 2)
   });
 
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
 
   const ctx = canvas.getContext("2d", { alpha: false });
-  await pdfPage.render({ canvasContext: ctx, viewport }).promise;
+
+  await pdfPage.render({
+    canvasContext: ctx,
+    viewport
+  }).promise;
 }
 
 async function makePage(number, className, width) {
-  if (number < 1 || number > pdf.numPages) return null;
+  if (!pdf || number < 1 || number > pdf.numPages) {
+    return null;
+  }
 
   const pdfPage = await pdf.getPage(number);
   const base = pdfPage.getViewport({ scale: 1 });
   const aspect = base.height / base.width;
 
-  const el = document.createElement("div");
-  el.className = `page ${className}`;
-  el.style.width = `${width}px`;
-  el.style.height = `${width * aspect}px`;
+  const element = document.createElement("div");
+  element.className = `page ${className}`;
+  element.style.width = `${width}px`;
+  element.style.height = `${width * aspect}px`;
 
   const canvas = document.createElement("canvas");
-  el.appendChild(canvas);
+  element.appendChild(canvas);
+
   await renderCanvas(pdfPage, canvas, width);
 
-  return el;
+  return element;
 }
 
 async function renderBook() {
   if (!pdf || animating) return;
+
   animating = true;
+  const thisLoad = loadToken;
 
   book.classList.remove("turn-next", "turn-prev");
   book.innerHTML = "";
 
-  mobile = window.innerWidth <= 800;
+  mobile = window.innerWidth <= 600;
 
-  const first = page;
-  const second = mobile ? null : page + 1;
+  const firstPage = Math.min(page, pdf.numPages);
+  const secondPage = mobile ? null : page + 1;
 
-  const p1 = await pdf.getPage(first);
-  const base = p1.getViewport({ scale: 1 });
+  const firstPdfPage = await pdf.getPage(firstPage);
 
-  let pageWidth;
-  if (mobile) {
-    pageWidth = Math.min(window.innerWidth * 0.92, 700) * scale;
-  } else {
-    pageWidth = Math.min(window.innerWidth * 0.44, 690) * scale;
+  if (thisLoad !== loadToken) {
+    animating = false;
+    return;
   }
 
-  const left = await makePage(first, mobile ? "right-page" : "left-page", pageWidth);
-  const right = second && second <= pdf.numPages
-    ? await makePage(second, "right-page", pageWidth)
-    : null;
+  const base = firstPdfPage.getViewport({ scale: 1 });
 
-  if (mobile) {
-    if (left) book.appendChild(left);
-  } else {
-    if (left) book.appendChild(left);
-    if (right) book.appendChild(right);
+  const maxPageWidth = mobile
+    ? Math.min(stage.clientWidth * 0.94, 700)
+    : Math.min(stage.clientWidth * 0.44, 690);
+
+  const maxHeight = stage.clientHeight * 0.88;
+  const naturalHeight = maxPageWidth * (base.height / base.width);
+  const fitScale = Math.min(1, maxHeight / naturalHeight);
+  const pageWidth = maxPageWidth * fitScale * scale;
+
+  const left = await makePage(
+    firstPage,
+    mobile ? "right-page" : "left-page",
+    pageWidth
+  );
+
+  if (thisLoad !== loadToken) {
+    animating = false;
+    return;
   }
+
+  let right = null;
+
+  if (!mobile && secondPage <= pdf.numPages) {
+    right = await makePage(secondPage, "right-page", pageWidth);
+  }
+
+  if (thisLoad !== loadToken) {
+    animating = false;
+    return;
+  }
+
+  if (left) book.appendChild(left);
+  if (right) book.appendChild(right);
+
+  book.style.transform = "none";
 
   updateUI();
-  fitBook();
   animating = false;
 }
 
-function fitBook() {
-  const pages = [...book.querySelectorAll(".page")];
-  if (!pages.length) return;
-
-  const maxH = stage.clientHeight * 0.9;
-  const maxW = mobile ? stage.clientWidth * 0.94 : stage.clientWidth * 0.88;
-
-  let width = pages[0].offsetWidth;
-  let height = pages[0].offsetHeight;
-
-  const totalW = mobile ? width : width * 2;
-  const ratio = Math.min(1, maxW / totalW, maxH / height);
-
-  book.style.transform = `scale(${ratio})`;
-}
+/* UPDATE CONTROLS AND URL */
 
 function updateUI() {
+  if (!pdf) return;
+
   const end = mobile ? page : Math.min(page + 1, pdf.numPages);
-  pageInfo.textContent = `${page}–${end} / ${pdf.numPages}`;
+
+  pageInfo.textContent = page === end
+    ? `${page} / ${pdf.numPages}`
+    : `${page}–${end} / ${pdf.numPages}`;
+
   prevBtn.disabled = page <= 1;
   nextBtn.disabled = page >= pdf.numPages;
+
   zoomReset.textContent = `${Math.round(scale * 100)}%`;
 
   const url = new URL(location.href);
+
+  if (currentDoc) {
+    url.searchParams.set("doc", currentDoc.id);
+  }
+
   url.searchParams.set("page", page);
+
   history.replaceState(null, "", url);
 }
 
+/* PAGE NAVIGATION */
+
 async function nextPage() {
   if (!pdf || animating || page >= pdf.numPages) return;
+
   book.classList.add("turn-next");
-  await new Promise(r => setTimeout(r, 220));
-  page += mobile ? 1 : 2;
+
+  await new Promise(resolve => setTimeout(resolve, 220));
+
+  page = Math.min(
+    page + (mobile ? 1 : 2),
+    pdf.numPages
+  );
+
   await renderBook();
 }
 
 async function prevPage() {
   if (!pdf || animating || page <= 1) return;
+
   book.classList.add("turn-prev");
-  await new Promise(r => setTimeout(r, 220));
-  page -= mobile ? 1 : 2;
-  if (page < 1) page = 1;
+
+  await new Promise(resolve => setTimeout(resolve, 220));
+
+  page = Math.max(
+    1,
+    page - (mobile ? 1 : 2)
+  );
+
   await renderBook();
 }
 
+/* ZOOM */
+
 function changeZoom(delta) {
-  scale = Math.max(.7, Math.min(1.8, scale + delta));
+  if (!pdf || animating) return;
+
+  scale = Math.max(
+    .7,
+    Math.min(1.8, scale + delta)
+  );
+
   renderBook();
 }
 
 prevBtn.addEventListener("click", prevPage);
 nextBtn.addEventListener("click", nextPage);
-zoomIn.addEventListener("click", () => changeZoom(.1));
-zoomOut.addEventListener("click", () => changeZoom(-.1));
-zoomReset.addEventListener("click", () => { scale = 1; renderBook(); });
+
+zoomIn.addEventListener("click", () => {
+  changeZoom(.1);
+});
+
+zoomOut.addEventListener("click", () => {
+  changeZoom(-.1);
+});
+
+zoomReset.addEventListener("click", () => {
+  if (!pdf || animating) return;
+
+  scale = 1;
+  renderBook();
+});
+
+/* FULLSCREEN */
 
 fullscreenBtn.addEventListener("click", async () => {
-  if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
-  else await document.exitFullscreen();
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch (error) {
+    console.error("Fullscreen unavailable:", error);
+  }
 });
 
-document.addEventListener("keydown", e => {
-  if (["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) return;
-  if (e.key === "ArrowRight" || e.key === " ") {
-    e.preventDefault();
+/* KEYBOARD */
+
+document.addEventListener("keydown", event => {
+  if (
+    ["INPUT", "TEXTAREA"].includes(
+      document.activeElement?.tagName
+    )
+  ) {
+    return;
+  }
+
+  if (event.key === "ArrowRight" || event.key === " ") {
+    event.preventDefault();
     nextPage();
   }
-  if (e.key === "ArrowLeft") {
-    e.preventDefault();
+
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
     prevPage();
   }
-  if (e.key === "+" || e.key === "=") changeZoom(.1);
-  if (e.key === "-") changeZoom(-.1);
-  if (e.key.toLowerCase() === "f") fullscreenBtn.click();
+
+  if (event.key === "+" || event.key === "=") {
+    changeZoom(.1);
+  }
+
+  if (event.key === "-") {
+    changeZoom(-.1);
+  }
+
+  if (event.key.toLowerCase() === "f") {
+    fullscreenBtn.click();
+  }
 });
 
-let touchX = null;
-stage.addEventListener("touchstart", e => {
-  touchX = e.changedTouches[0].clientX;
+/* TOUCH SWIPE */
+
+let touchStartX = null;
+
+stage.addEventListener("touchstart", event => {
+  touchStartX = event.changedTouches[0].clientX;
 }, { passive: true });
 
-stage.addEventListener("touchend", e => {
-  if (touchX === null) return;
-  const dx = e.changedTouches[0].clientX - touchX;
-  touchX = null;
-  if (Math.abs(dx) > 50) dx < 0 ? nextPage() : prevPage();
+stage.addEventListener("touchend", event => {
+  if (touchStartX === null) return;
+
+  const delta =
+    event.changedTouches[0].clientX - touchStartX;
+
+  touchStartX = null;
+
+  if (Math.abs(delta) > 50) {
+    delta < 0 ? nextPage() : prevPage();
+  }
 }, { passive: true });
+
+/* RESIZE */
 
 window.addEventListener("resize", () => {
-  const wasMobile = mobile;
-  mobile = window.innerWidth <= 800;
-  if (wasMobile !== mobile) renderBook();
-  else fitBook();
+  if (!pdf || animating) return;
+  renderBook();
 });
 
-loadPdf();
+/* START */
 
-  </script>
+initialize();
+</script>
+
 </body>
 </html>
