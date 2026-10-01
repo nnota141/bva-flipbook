@@ -354,38 +354,11 @@ button {
   text-decoration: none;
 }
 
-.turn-next .right-page {
-  animation: turnNext .55s ease both;
-}
-
-.turn-prev .left-page {
-  animation: turnPrev .55s ease both;
-}
-
-@keyframes turnNext {
-  0% {
-    transform: rotateY(0);
-    transform-origin: left center;
-  }
-  50% {
-    transform: rotateY(-88deg);
-  }
-  100% {
-    transform: rotateY(0);
-  }
-}
-
-@keyframes turnPrev {
-  0% {
-    transform: rotateY(0);
-    transform-origin: right center;
-  }
-  50% {
-    transform: rotateY(88deg);
-  }
-  100% {
-    transform: rotateY(0);
-  }
+/* StPageFlip supplies the page-turn animation and page shadows. */
+.book {
+  max-width: none;
+  max-height: none;
+  touch-action: pan-y;
 }
 
 /* RESPONSIVE */
@@ -648,6 +621,8 @@ const zoomReset = document.getElementById("zoomReset");
 const fullscreenBtn = document.getElementById("fullscreenBtn");
 
 let pdfjsLib;
+let PageFlip;
+let pageFlip = null;
 let pdf = null;
 let currentDoc = null;
 let page = 1;
@@ -664,6 +639,11 @@ async function initialize() {
 
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+
+    const pageFlipModule = await import(
+      "https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.module.js"
+    );
+    PageFlip = pageFlipModule.PageFlip;
 
     buildNavigation();
 
@@ -783,9 +763,13 @@ function createDocumentButton(doc) {
 /* LOAD SELECTED DOCUMENT */
 
 async function selectDocument(doc) {
-  if (animating) return;
-
   const thisLoad = ++loadToken;
+  animating = false;
+
+  if (pageFlip) {
+    pageFlip.destroy();
+    pageFlip = null;
+  }
 
   currentDoc = doc;
   pdf = null;
@@ -871,42 +855,40 @@ async function renderCanvas(pdfPage, canvas, targetWidth) {
   }).promise;
 }
 
-async function makePage(number, className, width) {
-  if (!pdf || number < 1 || number > pdf.numPages) {
-    return null;
-  }
+async function makePage(number, width) {
+  if (!pdf || number < 1 || number > pdf.numPages) return null;
 
   const pdfPage = await pdf.getPage(number);
   const base = pdfPage.getViewport({ scale: 1 });
   const aspect = base.height / base.width;
 
   const element = document.createElement("div");
-  element.className = `page ${className}`;
+  element.className = "page";
+  element.dataset.density = "soft";
   element.style.width = `${width}px`;
   element.style.height = `${width * aspect}px`;
 
   const canvas = document.createElement("canvas");
   element.appendChild(canvas);
-
   await renderCanvas(pdfPage, canvas, width);
-
   return element;
 }
 
 async function renderBook() {
-  if (!pdf || animating) return;
+  if (!pdf) return;
 
   animating = true;
   const thisLoad = loadToken;
 
-  book.classList.remove("turn-next", "turn-prev");
-  book.innerHTML = "";
+  if (pageFlip) {
+    pageFlip.destroy();
+    pageFlip = null;
+  }
 
+  book.innerHTML = "";
   mobile = window.innerWidth <= 600;
 
-  const firstPage = Math.min(page, pdf.numPages);
-  const secondPage = mobile ? null : page + 1;
-
+  const firstPage = Math.min(Math.max(1, page), pdf.numPages);
   const firstPdfPage = await pdf.getPage(firstPage);
 
   if (thisLoad !== loadToken) {
@@ -915,31 +897,24 @@ async function renderBook() {
   }
 
   const base = firstPdfPage.getViewport({ scale: 1 });
-
   const maxPageWidth = mobile
     ? Math.min(stage.clientWidth * 0.94, 700)
     : Math.min(stage.clientWidth * 0.44, 690);
-
   const maxHeight = stage.clientHeight * 0.88;
   const naturalHeight = maxPageWidth * (base.height / base.width);
   const fitScale = Math.min(1, maxHeight / naturalHeight);
-  const pageWidth = maxPageWidth * fitScale * scale;
+  const pageWidth = Math.max(120, maxPageWidth * fitScale * scale);
+  const pageHeight = pageWidth * (base.height / base.width);
 
-  const left = await makePage(
-    firstPage,
-    mobile ? "right-page" : "left-page",
-    pageWidth
-  );
-
-  if (thisLoad !== loadToken) {
-    animating = false;
-    return;
-  }
-
-  let right = null;
-
-  if (!mobile && secondPage <= pdf.numPages) {
-    right = await makePage(secondPage, "right-page", pageWidth);
+  // Render sequentially to avoid starting every PDF canvas render at once.
+  const pages = [];
+  for (let number = 1; number <= pdf.numPages; number++) {
+    if (thisLoad !== loadToken) {
+      animating = false;
+      return;
+    }
+    const element = await makePage(number, pageWidth);
+    if (element) pages.push(element);
   }
 
   if (thisLoad !== loadToken) {
@@ -947,11 +922,35 @@ async function renderBook() {
     return;
   }
 
-  if (left) book.appendChild(left);
-  if (right) book.appendChild(right);
+  pageFlip = new PageFlip(book, {
+    width: pageWidth,
+    height: pageHeight,
+    size: "fixed",
+    minWidth: 120,
+    maxWidth: 1200,
+    minHeight: 160,
+    maxHeight: 1600,
+    showCover: false,
+    usePortrait: mobile,
+    startPage: firstPage - 1,
+    drawShadow: true,
+    maxShadowOpacity: 0.42,
+    flippingTime: 650,
+    autoSize: false,
+    mobileScrollSupport: false,
+    clickEventForward: true,
+    disableFlipByClick: false
+  });
 
-  book.style.transform = "none";
+  pageFlip.loadFromHTML(pages);
+  pageFlip.on("flip", event => {
+    if (!pdf || !pageFlip) return;
+    const index = Number(event.data);
+    page = Math.min(pdf.numPages, Math.max(1, index + 1));
+    updateUI();
+  });
 
+  page = firstPage;
   updateUI();
   animating = false;
 }
@@ -985,34 +984,14 @@ function updateUI() {
 
 /* PAGE NAVIGATION */
 
-async function nextPage() {
-  if (!pdf || animating || page >= pdf.numPages) return;
-
-  book.classList.add("turn-next");
-
-  await new Promise(resolve => setTimeout(resolve, 220));
-
-  page = Math.min(
-    page + (mobile ? 1 : 2),
-    pdf.numPages
-  );
-
-  await renderBook();
+function nextPage() {
+  if (!pdf || !pageFlip || animating || page >= pdf.numPages) return;
+  pageFlip.flipNext();
 }
 
-async function prevPage() {
-  if (!pdf || animating || page <= 1) return;
-
-  book.classList.add("turn-prev");
-
-  await new Promise(resolve => setTimeout(resolve, 220));
-
-  page = Math.max(
-    1,
-    page - (mobile ? 1 : 2)
-  );
-
-  await renderBook();
+function prevPage() {
+  if (!pdf || !pageFlip || animating || page <= 1) return;
+  pageFlip.flipPrev();
 }
 
 /* ZOOM */
@@ -1117,9 +1096,11 @@ stage.addEventListener("touchend", event => {
 
 /* RESIZE */
 
+let resizeTimer;
 window.addEventListener("resize", () => {
-  if (!pdf || animating) return;
-  renderBook();
+  if (!pdf) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => renderBook(), 180);
 });
 
 /* START */
