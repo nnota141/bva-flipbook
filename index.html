@@ -1,1131 +1,423 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BVA Document Library</title>
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0d0f12;
-  --panel: rgba(23,26,31,.96);
-  --border: rgba(255,255,255,.09);
-  --text: #f4f5f7;
-  --muted: #9298a3;
+:root{
+  --desk:#e8e6e0; --surface:#fbfaf7; --ink:#1d1f1c; --muted:#6b6e68; --line:#d9d6cd;
+  --accent:#00785a; --accent-ink:#fff; --tint:#dcece4; --hover:#efede7; --shadow:rgba(30,28,20,.28);
+  --h:56px; --bar:60px; --side:300px;
+  color-scheme:light;
 }
-
-* {
-  box-sizing: border-box;
+@media (prefers-color-scheme:dark){
+  :root{--desk:#17181a; --surface:#202225; --ink:#ececea; --muted:#9a9d98; --line:#33363a;
+    --accent:#4cc79b; --accent-ink:#06261b; --tint:#1f3a31; --hover:#2a2d30; --shadow:rgba(0,0,0,.6); color-scheme:dark}
 }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;overflow:hidden;background:var(--desk);color:var(--ink);
+  font-family:"Google Sans","Google Sans Text","Product Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:15px;line-height:1.4}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-body {
-  margin: 0;
-  height: 100vh;
-  overflow: hidden;
-  color: var(--text);
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
-  background: radial-gradient(circle at 50% 40%, #20242a, #0d0f12 65%);
+/* header */
+header{position:fixed;inset:0 0 auto 0;height:var(--h);z-index:30;display:flex;align-items:center;gap:10px;
+  padding:0 14px;background:var(--surface);border-bottom:1px solid var(--line)}
+.icon-btn{width:38px;height:38px;border:0;border-radius:50%;background:none;display:grid;place-items:center}
+.icon-btn:hover:not(:disabled){background:var(--hover)}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.icon-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.flag{width:5px;height:26px;border-radius:2px;overflow:hidden;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flag i{flex:1}.flag i:nth-child(1){background:#fff}.flag i:nth-child(2){background:#00966e}.flag i:nth-child(3){background:#d62612}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand b{font-weight:600;font-size:16px;white-space:nowrap}
+.crumb{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb::before{content:"/";margin:0 8px 0 2px;opacity:.5}
+.spacer{flex:1}
+
+/* library panel */
+nav{position:fixed;top:var(--h);bottom:var(--bar);left:0;width:var(--side);z-index:20;overflow-y:auto;
+  background:var(--surface);border-right:1px solid var(--line);padding:18px 12px 24px;
+  transition:transform .25s ease}
+body.closed nav{transform:translateX(-100%)}
+nav h2{margin:18px 10px 6px;font-size:13px;font-weight:500;color:var(--muted)}
+nav h2:first-child{margin-top:2px}
+.doc{display:flex;align-items:baseline;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:8px;background:none;text-align:left}
+.doc:hover{background:var(--hover)}
+.doc.active{background:var(--tint)}
+.doc .t{font-weight:600;min-width:52px}
+.doc.active .t{color:var(--accent)}
+.doc .s{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.keys{margin:26px 10px 0;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;line-height:1.9}
+kbd{font:inherit;font-size:11.5px;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--desk)}
+.scrim{display:none}
+
+/* viewer */
+main{position:fixed;top:var(--h);bottom:var(--bar);right:0;left:var(--side);display:flex;overflow:auto;transition:left .25s ease}
+body.closed main{left:0}
+.stage{margin:auto;padding:28px}
+.book{filter:drop-shadow(0 10px 22px var(--shadow));touch-action:pan-y}
+.page{background:#fff;overflow:hidden}
+.page canvas{display:block;width:100%;height:100%}
+.page.blank{background:#f4f2ec}
+.msg{max-width:420px;text-align:center;color:var(--muted)}
+.msg h1{margin:0 0 6px;font-size:22px;font-weight:500;color:var(--ink)}
+.msg p{margin:6px 0}
+.msg code{color:var(--ink)}
+.progress{position:fixed;top:var(--h);left:0;height:3px;width:0;background:var(--accent);z-index:40;transition:width .2s}
+.edge{position:fixed;top:50%;z-index:15;width:46px;height:46px;margin-top:-23px;border-radius:50%;
+  border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;opacity:.0;transition:opacity .2s}
+main:hover~.edge,.edge:focus-visible{opacity:.92}
+.edge:disabled{display:none}
+.edge svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#edgePrev{left:calc(var(--side) + 14px)}#edgeNext{right:14px}
+body.closed #edgePrev{left:14px}
+
+/* control bar */
+footer{position:fixed;inset:auto 0 0 0;height:var(--bar);z-index:30;display:flex;align-items:center;gap:14px;
+  padding:0 14px;background:var(--surface);border-top:1px solid var(--line)}
+.pager{display:flex;align-items:center;gap:4px}
+.where{display:flex;align-items:center;gap:6px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:128px;justify-content:center}
+#pageInput{width:50px;height:32px;text-align:center;border:1px solid var(--line);border-radius:8px;background:var(--desk)}
+#pageInput:disabled{opacity:.4}
+input[type=range]{flex:1;min-width:80px;height:20px;background:none;accent-color:var(--accent)}
+.zoom{display:flex;align-items:center;gap:2px}
+#zoomReset{min-width:54px;height:32px;border:0;border-radius:8px;background:none;font-variant-numeric:tabular-nums}
+#zoomReset:hover{background:var(--hover)}
+
+@media (max-width:860px){
+  nav{width:min(86vw,320px);box-shadow:0 0 40px var(--shadow);top:0;bottom:0;padding-top:calc(var(--h) + 14px)}
+  main,body.closed main{left:0}
+  .scrim{position:fixed;inset:0;z-index:19;background:rgba(0,0,0,.4)}
+  body:not(.closed) .scrim{display:block}
+  .keys{display:none}
+  .edge{display:none}
+  .stage{padding:14px}
 }
-
-button {
-  font: inherit;
-}
-
-/* TOP BAR */
-
-.topbar {
-  height: 68px;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 22px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(18px);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-
-.brand-mark {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
-  border-radius: 9px;
-  background: white;
-  color: #111;
-  font-size: 11px;
-  font-weight: 900;
-}
-
-.brand strong {
-  display: block;
-  font-size: 14px;
-}
-
-.brand span {
-  display: block;
-  color: var(--muted);
-  font-size: 11px;
-  margin-top: 3px;
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.toolbar button {
-  height: 34px;
-  min-width: 34px;
-  padding: 0 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: rgba(255,255,255,.05);
-  color: var(--text);
-  cursor: pointer;
-  transition: .2s;
-}
-
-.toolbar button:hover {
-  background: rgba(255,255,255,.13);
-}
-
-.toolbar button:disabled {
-  opacity: .3;
-  cursor: default;
-}
-
-#pageInfo {
-  min-width: 90px;
-  text-align: center;
-  font-size: 12px;
-  color: #c7cad0;
-}
-
-.separator {
-  width: 1px;
-  height: 23px;
-  background: var(--border);
-  margin: 0 7px;
-}
-
-/* SIDEBAR */
-
-.sidebar {
-  position: fixed;
-  z-index: 10;
-  top: 68px;
-  bottom: 48px;
-  left: 0;
-  width: 250px;
-  padding: 22px 14px;
-  overflow-y: auto;
-  background: rgba(18,20,25,.95);
-  border-right: 1px solid var(--border);
-}
-
-.sidebar-heading {
-  margin: 0 10px 12px;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.4px;
-  text-transform: uppercase;
-}
-
-.doc-list {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.doc-button {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 11px 12px;
-  border: 1px solid transparent;
-  border-radius: 9px;
-  background: transparent;
-  color: #d3d6dc;
-  text-align: left;
-  cursor: pointer;
-  transition: .18s;
-}
-
-.doc-button:hover {
-  background: rgba(255,255,255,.055);
-}
-
-.doc-button.active {
-  background: rgba(255,255,255,.11);
-  border-color: rgba(255,255,255,.1);
-  color: white;
-}
-
-.doc-icon {
-  width: 34px;
-  height: 38px;
-  flex: 0 0 34px;
-  display: grid;
-  place-items: center;
-  border-radius: 6px;
-  background: rgba(255,255,255,.07);
-  color: #d8dce3;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.doc-button.active .doc-icon {
-  background: white;
-  color: #111;
-}
-
-.doc-text {
-  min-width: 0;
-}
-
-.doc-title {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.doc-subtitle {
-  display: block;
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.section-divider {
-  height: 1px;
-  background: var(--border);
-  margin: 20px 8px;
-}
-
-.status {
-  color: var(--muted);
-  font-size: 11px;
-  text-align: center;
-  margin: 20px 5px;
-  line-height: 1.6;
-}
-
-/* PDF VIEWER */
-
-.viewer {
-  position: fixed;
-  top: 68px;
-  right: 0;
-  bottom: 48px;
-  left: 250px;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-
-.stage {
-  width: 96%;
-  height: 94%;
-  display: grid;
-  place-items: center;
-  perspective: 2200px;
-}
-
-.book {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  max-width: 96%;
-  max-height: 94%;
-  transform-origin: center center;
-}
-
-.book-shadow {
-  position: absolute;
-  width: 65%;
-  height: 65%;
-  border-radius: 50%;
-  background: rgba(0,0,0,.5);
-  filter: blur(45px);
-}
-
-.page {
-  position: relative;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 16px 50px rgba(0,0,0,.4);
-}
-
-.page canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.left-page {
-  border-radius: 3px 0 0 3px;
-  border-right: 1px solid rgba(0,0,0,.15);
-}
-
-.right-page {
-  border-radius: 0 3px 3px 0;
-  border-left: 1px solid rgba(0,0,0,.15);
-}
-
-/* EMPTY STATE */
-
-.empty-state {
-  width: min(500px, 90%);
-  padding: 45px 30px;
-  text-align: center;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: #191c22;
-  box-shadow: 0 30px 80px rgba(0,0,0,.35);
-}
-
-.empty-icon {
-  width: 60px;
-  height: 60px;
-  display: grid;
-  place-items: center;
-  margin: auto;
-  border-radius: 14px;
-  background: white;
-  color: #111;
-  font-weight: 900;
-}
-
-.empty-state h2 {
-  margin: 18px 0 8px;
-  font-size: 21px;
-}
-
-.empty-state p {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.7;
-}
-
-.empty-state code {
-  color: white;
-  overflow-wrap: anywhere;
-}
-
-/* BOTTOM BAR */
-
-.bottombar {
-  position: fixed;
-  z-index: 20;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 20px;
-  color: var(--muted);
-  background: var(--panel);
-  border-top: 1px solid var(--border);
-  font-size: 11px;
-}
-
-.bottombar a {
-  color: #d5d8dd;
-  text-decoration: none;
-}
-
-/* StPageFlip supplies the page-turn animation and page shadows. */
-.book {
-  max-width: none;
-  max-height: none;
-  touch-action: pan-y;
-}
-
-/* RESPONSIVE */
-
-@media (max-width: 850px) {
-  .sidebar {
-    width: 190px;
-    padding: 15px 8px;
-  }
-
-  .viewer {
-    left: 190px;
-  }
-
-  .doc-button {
-    gap: 8px;
-    padding: 9px 7px;
-  }
-
-  .doc-icon {
-    width: 30px;
-    flex-basis: 30px;
-  }
-
-  .toolbar {
-    gap: 3px;
-  }
-}
-
-@media (max-width: 600px) {
-  .topbar {
-    height: 58px;
-    padding: 0 9px;
-  }
-
-  .brand span,
-  .brand strong {
-    display: none;
-  }
-
-  .brand-mark {
-    width: 34px;
-    height: 34px;
-  }
-
-  .toolbar button {
-    min-width: 30px;
-    height: 31px;
-    padding: 0 5px;
-  }
-
-  #pageInfo {
-    min-width: 65px;
-    font-size: 10px;
-  }
-
-  .separator {
-    margin: 0 2px;
-  }
-
-  .sidebar {
-    top: 58px;
-    bottom: 40px;
-    width: 68px;
-    padding: 12px 5px;
-  }
-
-  .sidebar-heading {
-    display: none;
-  }
-
-  .doc-button {
-    justify-content: center;
-    padding: 8px 3px;
-  }
-
-  .doc-icon {
-    width: 40px;
-    height: 40px;
-    flex-basis: 40px;
-  }
-
-  .doc-text {
-    display: none;
-  }
-
-  .section-divider {
-    margin: 12px 4px;
-  }
-
-  .viewer {
-    top: 58px;
-    bottom: 40px;
-    left: 68px;
-  }
-
-  .stage {
-    width: 98%;
-    height: 92%;
-  }
-
-  .book {
-    max-width: 98%;
-  }
-
-  .bottombar {
-    height: 40px;
-    justify-content: center;
-  }
-
-  .bottombar .hint {
-    display: none;
-  }
+@media (max-width:640px){
+  :root{--bar:96px}
+  header{padding:0 8px}
+  .brand b{font-size:15px}
+  footer{flex-wrap:wrap;align-content:center;gap:2px 6px;padding:0 10px}
+  input[type=range]{order:-1;flex:1 0 100%}
+  .zoom{margin-left:auto}
+  .zoom .icon-btn{width:32px;height:32px}
+  .keys{display:none}
 }
 </style>
 </head>
+<body class="closed">
 
-<body>
-
-<header class="topbar">
+<header>
+  <button class="icon-btn" id="menuBtn" title="Library" aria-label="Toggle library">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
   <div class="brand">
-    <div class="brand-mark">BVA</div>
-    <div>
-      <strong>Bulgarian Virtual Airlines</strong>
-      <span>Operations Document Library</span>
-    </div>
+    <span class="flag"><i></i><i></i><i></i></span>
+    <b>Bulgarian Virtual Airlines</b>
   </div>
-
-  <div class="toolbar">
-    <button id="prevBtn" title="Previous page">‹</button>
-    <span id="pageInfo">Select a document</span>
-    <button id="nextBtn" title="Next page">›</button>
-    <span class="separator"></span>
-    <button id="zoomOut" title="Zoom out">−</button>
-    <button id="zoomReset" title="Reset zoom">100%</button>
-    <button id="zoomIn" title="Zoom in">+</button>
-    <button id="fullscreenBtn" title="Fullscreen">⛶</button>
-  </div>
+  <span class="crumb" id="crumb">Document Library</span>
+  <span class="spacer"></span>
+  <button class="icon-btn" id="fullscreenBtn" title="Fullscreen (F)" aria-label="Fullscreen">
+    <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+  </button>
 </header>
 
-<aside class="sidebar">
-  <p class="sidebar-heading">Operations</p>
-  <div class="doc-list" id="operationsList"></div>
+<div class="progress" id="progress"></div>
+<div class="scrim" id="scrim"></div>
 
-  <div class="section-divider"></div>
+<nav id="library">
+  <h2>Manuals</h2><div id="operationsList"></div>
+  <h2>Airport briefings</h2><div id="airportsList"></div>
+  <div class="keys">
+    <kbd>←</kbd> <kbd>→</kbd> turn page &nbsp; <kbd>Home</kbd> <kbd>End</kbd> first / last<br>
+    <kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd> zoom &nbsp; <kbd>F</kbd> fullscreen &nbsp; <kbd>G</kbd> go to page
+  </div>
+</nav>
 
-  <p class="sidebar-heading">Airport Briefings</p>
-  <div class="doc-list" id="airportsList"></div>
-
-  <div id="status" class="status">Select a document to begin.</div>
-</aside>
-
-<main class="viewer">
+<main id="viewer">
   <div class="stage" id="stage">
-    <div class="book-shadow"></div>
     <div class="book" id="book">
-      <div class="empty-state">
-        <div class="empty-icon">BVA</div>
-        <h2>Document Library</h2>
-        <p>Select an Operations Manual or Airport Briefing from the sidebar.</p>
-      </div>
+      <div class="msg"><h1>Document Library</h1><p>Open the menu and choose a manual or an airport briefing.</p></div>
     </div>
   </div>
 </main>
 
-<footer class="bottombar">
-  <span class="hint">← → Navigate · Space to turn page · + / − Zoom · F Fullscreen</span>
-  <span>Bulgarian Virtual Airlines</span>
+<button class="edge" id="edgePrev" aria-label="Previous page"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+<button class="edge" id="edgeNext" aria-label="Next page"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+
+<footer>
+  <div class="pager">
+    <button class="icon-btn" id="prevBtn" title="Previous page" aria-label="Previous page"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="where"><input id="pageInput" inputmode="numeric" aria-label="Go to page" disabled><span id="total">of –</span></div>
+    <button class="icon-btn" id="nextBtn" title="Next page" aria-label="Next page"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+  </div>
+  <input type="range" id="scrub" min="1" max="1" value="1" disabled aria-label="Page scrubber">
+  <div class="zoom">
+    <button class="icon-btn" id="zoomOut" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+    <button id="zoomReset" title="Reset zoom">100%</button>
+    <button class="icon-btn" id="zoomIn" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  </div>
 </footer>
 
 <script type="module">
 /* ==========================================================
-   BVA DOCUMENT CONFIGURATION
-
-   enabled: true  = document is shown
-   enabled: false = document is hidden
-
-   PDF files go inside the "pdf" folder.
-
-   Operations filenames:
-   BVA OM-A.pdf
-   BVA OM-B.pdf
-
-   Airport filename:
-   (ICAO) Briefing.pdf
-
-   Add airports by copying an entry in the airports array.
+   DOCUMENTS — enabled: false hides an entry.
+   PDFs live in /pdf. Manuals: "BVA OM-A.pdf". Airports: "LBSF Briefing.pdf".
+   To add an airport, copy an entry below and drop "<ICAO> Briefing.pdf" into /pdf.
    ========================================================== */
-
 const DOCUMENTS = {
   operations: [
-    {
-      id: "om-a",
-      title: "OM-A",
-      subtitle: "Operations Manual Part A",
-      filename: "BVA OM-A.pdf",
-      enabled: true
-    },
-    {
-      id: "om-b",
-      title: "OM-B",
-      subtitle: "Operations Manual Part B",
-      filename: "BVA OM-B.pdf",
-      enabled: true
-    }
+    { id: "om-a", title: "OM-A", subtitle: "Operations Manual Part A", filename: "BVA OM-A.pdf", enabled: true },
+    { id: "om-b", title: "OM-B", subtitle: "Operations Manual Part B", filename: "BVA OM-B.pdf", enabled: true }
   ],
-
   airports: [
-    {
-      id: "lbwn",
-      icao: "LBWN",
-      name: "Varna Airport",
-      enabled: true
-    },
-    {
-      id: "lbbg",
-      icao: "LBBG",
-      name: "Burgas Airport",
-      enabled: true
-    },
-    {
-      id: "lbsf",
-      icao: "LBSF",
-      name: "Sofia Airport",
-      enabled: true
-    }
-
-    /*
-    ADD NEW AIRPORT BRIEFINGS HERE:
-
-    ,{
-      id: "eddm",
-      icao: "EDDM",
-      name: "Munich Airport",
-      enabled: true
-    }
-
-    Add the file:
-    pdf/EDDM Briefing.pdf
-    */
+    { id: "lbwn", icao: "LBWN", name: "Varna Airport",  enabled: true },
+    { id: "lbbg", icao: "LBBG", name: "Burgas Airport", enabled: true },
+    { id: "lbsf", icao: "LBSF", name: "Sofia Airport",  enabled: true }
+    // ,{ id: "eddm", icao: "EDDM", name: "Munich Airport", enabled: true }
   ]
 };
 
-/* ==========================================================
-   VIEWER ENGINE
-   ========================================================== */
-
 const PDF_BASE = "pdf/";
+const $ = id => document.getElementById(id);
+const book = $("book"), stage = $("stage"), viewer = $("viewer");
+const pageInput = $("pageInput"), total = $("total"), scrub = $("scrub"), progress = $("progress");
+const prevBtns = [$("prevBtn"), $("edgePrev")], nextBtns = [$("nextBtn"), $("edgeNext")];
 
-const book = document.getElementById("book");
-const stage = document.getElementById("stage");
-const pageInfo = document.getElementById("pageInfo");
-const status = document.getElementById("status");
+let pdfjsLib, PageFlip, pageFlip = null, pdf = null, currentDoc = null;
+let page = 1, scale = 1, loadToken = 0, busy = false, mobile = false;
+let pageMap = [], slots = [];   // pageMap[index] = pdf page number or null (blank)
 
-const prevBtn = document.getElementById("prevBtn");
-const nextBtn = document.getElementById("nextBtn");
-const zoomIn = document.getElementById("zoomIn");
-const zoomOut = document.getElementById("zoomOut");
-const zoomReset = document.getElementById("zoomReset");
-const fullscreenBtn = document.getElementById("fullscreenBtn");
-
-let pdfjsLib;
-let PageFlip;
-let pageFlip = null;
-let pdf = null;
-let currentDoc = null;
-let page = 1;
-let scale = 1;
-let animating = false;
-let mobile = window.innerWidth <= 600;
-let loadToken = 0;
+const docs = () => [
+  ...DOCUMENTS.operations.filter(d => d.enabled).map(d => ({ ...d, type: "operations" })),
+  ...DOCUMENTS.airports.filter(d => d.enabled).map(d => ({
+    ...d, type: "airport", title: d.icao, subtitle: d.name || "Airport briefing", filename: `${d.icao} Briefing.pdf`
+  }))
+];
 
 async function initialize() {
+  buildNavigation();
   try {
-    pdfjsLib = await import(
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs"
-    );
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
-
-    const pageFlipModule = await import(
-      "https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.module.js"
-    );
-    PageFlip = pageFlipModule.PageFlip;
-
-    buildNavigation();
-
-    const params = new URLSearchParams(location.search);
-    const requestedId = params.get("doc");
-    const requestedPage = parseInt(params.get("page"), 10);
-
-    const enabledDocs = getEnabledDocuments();
-
-    const initialDoc =
-      enabledDocs.find(d => d.id === requestedId) || enabledDocs[0];
-
-    if (initialDoc) {
-      page = Number.isFinite(requestedPage)
-        ? Math.max(1, requestedPage)
-        : 1;
-
-      await selectDocument(initialDoc);
-    }
-  } catch (error) {
-    console.error(error);
-    status.textContent = "Unable to load the PDF viewer engine.";
+    pdfjsLib = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs");
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+    PageFlip = (await import("https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.module.js")).PageFlip;
+  } catch (e) {
+    console.error(e);
+    return message("Viewer could not start", "The PDF engine failed to load. Check your connection and reload.");
   }
+  const params = new URLSearchParams(location.search);
+  const list = docs();
+  const start = list.find(d => d.id === params.get("doc")) || list[0];
+  if (!start) return message("Nothing to show", "No documents are enabled.");
+  const p = parseInt(params.get("page"), 10);
+  page = Number.isFinite(p) ? Math.max(1, p) : 1;
+  if (matchMedia("(min-width:861px)").matches) document.body.classList.remove("closed");
+  selectDocument(start, page);
 }
-
-function getEnabledDocuments() {
-  const operations = DOCUMENTS.operations
-    .filter(d => d.enabled)
-    .map(d => ({ ...d, type: "operations" }));
-
-  const airports = DOCUMENTS.airports
-    .filter(d => d.enabled)
-    .map(d => ({
-      ...d,
-      type: "airport",
-      title: d.icao,
-      subtitle: d.name || "Airport Briefing",
-      filename: `${d.icao} Briefing.pdf`
-    }));
-
-  return [...operations, ...airports];
-}
-
-/* BUILD SIDEBAR BUTTONS */
 
 function buildNavigation() {
-  const operationsList = document.getElementById("operationsList");
-  const airportsList = document.getElementById("airportsList");
-
-  operationsList.innerHTML = "";
-  airportsList.innerHTML = "";
-
-  const operations = DOCUMENTS.operations.filter(d => d.enabled);
-  const airports = DOCUMENTS.airports.filter(d => d.enabled);
-
-  operations.forEach(doc => {
-    operationsList.appendChild(
-      createDocumentButton({
-        ...doc,
-        type: "operations"
-      })
-    );
+  const fill = (el, items) => items.forEach(d => {
+    const b = document.createElement("button");
+    b.className = "doc"; b.dataset.id = d.id;
+    b.innerHTML = `<span class="t"></span><span class="s"></span>`;
+    b.firstChild.textContent = d.title; b.lastChild.textContent = d.subtitle;
+    b.onclick = () => { selectDocument(d, 1); if (!matchMedia("(min-width:861px)").matches) document.body.classList.add("closed"); };
+    el.appendChild(b);
   });
-
-  airports.forEach(doc => {
-    airportsList.appendChild(
-      createDocumentButton({
-        ...doc,
-        type: "airport",
-        title: doc.icao,
-        subtitle: doc.name || "Airport Briefing",
-        filename: `${doc.icao} Briefing.pdf`
-      })
-    );
-  });
-
-  if (!operations.length) {
-    operationsList.innerHTML =
-      '<div class="status">No enabled manuals.</div>';
-  }
-
-  if (!airports.length) {
-    airportsList.innerHTML =
-      '<div class="status">No enabled airport briefings.</div>';
-  }
+  const all = docs();
+  fill($("operationsList"), all.filter(d => d.type === "operations"));
+  fill($("airportsList"), all.filter(d => d.type === "airport"));
 }
 
-function createDocumentButton(doc) {
-  const button = document.createElement("button");
-  button.className = "doc-button";
-  button.dataset.docId = doc.id;
-  button.title = `${doc.title} — ${doc.subtitle}`;
-
-  const icon = document.createElement("span");
-  icon.className = "doc-icon";
-  icon.textContent = doc.type === "airport" ? "APT" : "OM";
-
-  const textWrap = document.createElement("span");
-  textWrap.className = "doc-text";
-
-  const title = document.createElement("span");
-  title.className = "doc-title";
-  title.textContent = doc.title;
-
-  const subtitle = document.createElement("span");
-  subtitle.className = "doc-subtitle";
-  subtitle.textContent = doc.subtitle;
-
-  textWrap.append(title, subtitle);
-  button.append(icon, textWrap);
-
-  button.addEventListener("click", () => selectDocument(doc));
-
-  return button;
+function message(title, text, code) {
+  book.innerHTML = "";
+  const m = document.createElement("div");
+  m.className = "msg";
+  m.innerHTML = `<h1></h1><p></p>${code ? "<p><code></code></p>" : ""}`;
+  m.querySelector("h1").textContent = title;
+  m.querySelector("p").textContent = text;
+  if (code) m.querySelector("code").textContent = code;
+  book.appendChild(m);
 }
 
-/* LOAD SELECTED DOCUMENT */
+function setControls(on) {
+  pageInput.disabled = scrub.disabled = !on;
+  if (!on) { pageInput.value = ""; total.textContent = "of –"; prevBtns.concat(nextBtns).forEach(b => b.disabled = true); }
+}
 
-async function selectDocument(doc) {
-  const thisLoad = ++loadToken;
-  animating = false;
-
-  if (pageFlip) {
-    pageFlip.destroy();
-    pageFlip = null;
-  }
-
-  currentDoc = doc;
-  pdf = null;
-  page = 1;
-  scale = 1;
-
-  document.querySelectorAll(".doc-button").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.docId === doc.id
-    );
-  });
-
-  book.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">BVA</div>
-      <h2>Loading ${doc.title}</h2>
-      <p>Please wait while the document is being loaded.</p>
-    </div>
-  `;
-
-  pageInfo.textContent = "Loading…";
-  status.textContent = doc.subtitle;
-
-  const url = PDF_BASE + encodeURIComponent(doc.filename);
-
-  const newUrl = new URL(location.href);
-  newUrl.searchParams.set("doc", doc.id);
-  newUrl.searchParams.set("page", "1");
-  history.replaceState(null, "", newUrl);
-
+async function selectDocument(doc, startPage = 1) {
+  const token = ++loadToken;
+  if (pageFlip) { pageFlip.destroy(); pageFlip = null; }
+  currentDoc = doc; pdf = null; page = startPage; scale = 1;
+  document.querySelectorAll(".doc").forEach(b => b.classList.toggle("active", b.dataset.id === doc.id));
+  $("crumb").textContent = `${doc.title} · ${doc.subtitle}`;
+  document.title = `${doc.title} — BVA Document Library`;
+  setControls(false);
+  message(`Opening ${doc.title}…`, "One moment.");
+  progress.style.width = "6%";
   try {
-    const loadedPdf = await pdfjsLib.getDocument(url).promise;
-
-    if (thisLoad !== loadToken) return;
-
-    pdf = loadedPdf;
+    const task = pdfjsLib.getDocument(PDF_BASE + encodeURIComponent(doc.filename));
+    task.onProgress = ({ loaded, total: t }) => { if (t && token === loadToken) progress.style.width = Math.max(6, loaded / t * 80) + "%"; };
+    const loaded = await task.promise;
+    if (token !== loadToken) return;
+    pdf = loaded;
     await renderBook();
-
-    status.textContent =
-      `${doc.subtitle} · ${pdf.numPages} pages`;
-
-  } catch (error) {
-    if (thisLoad !== loadToken) return;
-
-    console.error("PDF loading error:", error);
-
-    book.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">PDF</div>
-        <h2>Document unavailable</h2>
-        <p>Could not load <code>${doc.filename}</code>.</p>
-        <p>Check that the PDF is in the <code>pdf/</code> folder
-        and the filename matches exactly.</p>
-      </div>
-    `;
-
-    pageInfo.textContent = "Unavailable";
-    status.textContent = "PDF could not be loaded.";
+  } catch (e) {
+    if (token !== loadToken) return;
+    console.error(e);
     pdf = null;
+    message("Document unavailable", "Could not load the file. Check that it is in the pdf folder and the name matches exactly:", doc.filename);
   }
+  if (token === loadToken) { progress.style.width = "100%"; setTimeout(() => token === loadToken && (progress.style.width = "0"), 300); }
 }
 
-/* RENDER PDF PAGES */
-
-async function renderCanvas(pdfPage, canvas, targetWidth) {
-  const base = pdfPage.getViewport({ scale: 1 });
-
-  const ratio = targetWidth / base.width;
-
-  const viewport = pdfPage.getViewport({
-    scale: ratio * Math.min(window.devicePixelRatio || 1, 2)
-  });
-
-  canvas.width = Math.ceil(viewport.width);
-  canvas.height = Math.ceil(viewport.height);
-
-  const ctx = canvas.getContext("2d", { alpha: false });
-
-  await pdfPage.render({
-    canvasContext: ctx,
-    viewport
-  }).promise;
+/* Pages are created empty and drawn on demand around the reader's position. */
+async function drawSlot(i) {
+  const s = slots[i];
+  if (!s || s.done || s.busy || !s.n) return;
+  s.busy = true;
+  const token = loadToken, doc = pdf;
+  try {
+    const p = await doc.getPage(s.n);
+    const base = p.getViewport({ scale: 1 });
+    const v = p.getViewport({ scale: s.w / base.width * Math.min(devicePixelRatio || 1, 2) });
+    s.canvas.width = Math.ceil(v.width); s.canvas.height = Math.ceil(v.height);
+    await p.render({ canvasContext: s.canvas.getContext("2d", { alpha: false }), viewport: v }).promise;
+    if (token === loadToken) s.done = true;
+  } catch (e) { console.error("render", s.n, e); }
+  s.busy = false;
 }
-
-async function makePage(number, width) {
-  if (!pdf || number < 1 || number > pdf.numPages) return null;
-
-  const pdfPage = await pdf.getPage(number);
-  const base = pdfPage.getViewport({ scale: 1 });
-  const aspect = base.height / base.width;
-
-  const element = document.createElement("div");
-  element.className = "page";
-  element.dataset.density = "soft";
-  element.style.width = `${width}px`;
-  element.style.height = `${width * aspect}px`;
-
-  const canvas = document.createElement("canvas");
-  element.appendChild(canvas);
-  await renderCanvas(pdfPage, canvas, width);
-  return element;
+async function drawAround(index) {
+  const order = [];
+  for (let d = 0; d <= 5; d++) { order.push(index + d); if (d) order.push(index - d); }
+  for (const i of order) await drawSlot(i);
 }
 
 async function renderBook() {
   if (!pdf) return;
-
-  animating = true;
-  const thisLoad = loadToken;
-
-  if (pageFlip) {
-    pageFlip.destroy();
-    pageFlip = null;
-  }
-
+  busy = true;
+  const token = loadToken, N = pdf.numPages;
+  if (pageFlip) { pageFlip.destroy(); pageFlip = null; }
   book.innerHTML = "";
-  mobile = window.innerWidth <= 600;
+  mobile = innerWidth <= 640;
+  page = Math.min(Math.max(1, page), N);
 
-  const firstPage = Math.min(Math.max(1, page), pdf.numPages);
-  const firstPdfPage = await pdf.getPage(firstPage);
+  const first = await pdf.getPage(1);
+  if (token !== loadToken) return;
+  const base = first.getViewport({ scale: 1 }), ratio = base.height / base.width;
+  const availW = viewer.clientWidth - (innerWidth <= 860 ? 28 : 56);
+  const availH = viewer.clientHeight - (innerWidth <= 860 ? 28 : 56);
+  const fitW = Math.min(mobile ? availW : availW / 2, availH / ratio, 760);
+  const w = Math.max(140, Math.round(fitW * scale)), h = Math.round(w * ratio);
 
-  if (thisLoad !== loadToken) {
-    animating = false;
-    return;
+  const blankBefore = !mobile && N > 1 && N % 2 === 1;   // keeps the back cover on its own sheet
+  pageMap = []; slots = [];
+  const els = [];
+  for (let n = 1; n <= N; n++) {
+    if (blankBefore && n === N) { pageMap.push(null); slots.push({}); const b = document.createElement("div"); b.className = "page blank"; b.dataset.density = "soft"; els.push(b); }
+    const el = document.createElement("div");
+    el.className = "page"; el.dataset.density = "soft";
+    el.style.cssText = `width:${w}px;height:${h}px`;
+    const canvas = document.createElement("canvas");
+    el.appendChild(canvas);
+    pageMap.push(n); slots.push({ n, w, canvas, done: false, busy: false }); els.push(el);
   }
+  els.forEach(e => { if (!e.style.width) e.style.cssText = `width:${w}px;height:${h}px`; });
 
-  const base = firstPdfPage.getViewport({ scale: 1 });
-  const maxPageWidth = mobile
-    ? Math.min(stage.clientWidth * 0.94, 700)
-    : Math.min(stage.clientWidth * 0.44, 690);
-  const maxHeight = stage.clientHeight * 0.88;
-  const naturalHeight = maxPageWidth * (base.height / base.width);
-  const fitScale = Math.min(1, maxHeight / naturalHeight);
-  const pageWidth = Math.max(120, maxPageWidth * fitScale * scale);
-  const pageHeight = pageWidth * (base.height / base.width);
-
-  // Render sequentially to avoid starting every PDF canvas render at once.
-  const pages = [];
-  for (let number = 1; number <= pdf.numPages; number++) {
-    if (thisLoad !== loadToken) {
-      animating = false;
-      return;
-    }
-
-    // Keep the final PDF page on its own sheet. With a standalone cover,
-    // an odd page count needs a blank sheet immediately before the back page.
-    if (!mobile && pdf.numPages > 1 && pdf.numPages % 2 === 1 && number === pdf.numPages) {
-      const blank = document.createElement("div");
-      blank.className = "page blank-page";
-      blank.dataset.density = "soft";
-      blank.style.width = `${pageWidth}px`;
-      blank.style.height = `${pageHeight}px`;
-      pages.push(blank);
-    }
-
-    const element = await makePage(number, pageWidth);
-    if (element) pages.push(element);
-  }
-
-  if (thisLoad !== loadToken) {
-    animating = false;
-    return;
-  }
-
+  const startIndex = Math.max(0, pageMap.indexOf(page));
   pageFlip = new PageFlip(book, {
-    width: pageWidth,
-    height: pageHeight,
-    size: "fixed",
-    minWidth: 120,
-    maxWidth: 1200,
-    minHeight: 160,
-    maxHeight: 1600,
-    showCover: !mobile,
-    usePortrait: mobile,
-    startPage: (!mobile && pdf.numPages > 1 && pdf.numPages % 2 === 1 && firstPage === pdf.numPages)
-      ? firstPage
-      : firstPage - 1,
-    drawShadow: true,
-    maxShadowOpacity: 0.42,
-    flippingTime: 650,
-    autoSize: false,
-    mobileScrollSupport: false,
-    clickEventForward: true,
-    disableFlipByClick: false
+    width: w, height: h, size: "fixed", minWidth: 120, maxWidth: 1400, minHeight: 160, maxHeight: 1800,
+    showCover: !mobile, usePortrait: mobile, startPage: startIndex,
+    drawShadow: true, maxShadowOpacity: .35, flippingTime: 600,
+    autoSize: false, mobileScrollSupport: false, clickEventForward: true
   });
-
-  pageFlip.loadFromHTML(pages);
-  pageFlip.on("flip", event => {
-    if (!pdf || !pageFlip) return;
-    const index = Number(event.data);
-    const hasInsertedBlank = !mobile && pdf.numPages > 1 && pdf.numPages % 2 === 1;
-    // The inserted blank sheet sits before the last PDF page and is not a
-    // document page; keep the counter on the preceding real page while it shows.
-    page = hasInsertedBlank && index === pdf.numPages - 1
-      ? pdf.numPages - 1
-      : Math.min(pdf.numPages, Math.max(1, index + 1 - (hasInsertedBlank && index > pdf.numPages - 1 ? 1 : 0)));
-    updateUI();
-  });
-
-  page = firstPage;
-  updateUI();
-  animating = false;
+  pageFlip.loadFromHTML(els);
+  pageFlip.on("flip", e => { onIndex(Number(e.data)); });
+  scrub.max = N; total.textContent = `of ${N}`;
+  setControls(true);
+  onIndex(startIndex);
+  busy = false;
 }
 
-/* UPDATE CONTROLS AND URL */
-
-function updateUI() {
-  if (!pdf) return;
-
-  const end = mobile ? page : Math.min(page + 1, pdf.numPages);
-
-  pageInfo.textContent = page === end
-    ? `${page} / ${pdf.numPages}`
-    : `${page}–${end} / ${pdf.numPages}`;
-
-  prevBtn.disabled = page <= 1;
-  nextBtn.disabled = page >= pdf.numPages;
-
-  zoomReset.textContent = `${Math.round(scale * 100)}%`;
-
-  const url = new URL(location.href);
-
-  if (currentDoc) {
-    url.searchParams.set("doc", currentDoc.id);
-  }
-
-  url.searchParams.set("page", page);
-
-  history.replaceState(null, "", url);
+function onIndex(index) {
+  const real = pageMap[index] ?? pageMap[index - 1] ?? 1;
+  page = real;
+  const N = pdf.numPages;
+  const end = (mobile || index === 0) ? real : Math.min(real + 1, N);
+  pageInput.value = real === end ? real : `${real}–${end}`;
+  scrub.value = real;
+  prevBtns.forEach(b => b.disabled = real <= 1);
+  nextBtns.forEach(b => b.disabled = end >= N);
+  $("zoomReset").textContent = Math.round(scale * 100) + "%";
+  const u = new URL(location.href);
+  u.searchParams.set("doc", currentDoc.id); u.searchParams.set("page", real);
+  history.replaceState(null, "", u);
+  drawAround(index);
 }
 
-/* PAGE NAVIGATION */
-
-function nextPage() {
-  if (!pdf || !pageFlip || animating || page >= pdf.numPages) return;
-  pageFlip.flipNext();
+/* navigation */
+const nextPage = () => pageFlip && !busy && pageFlip.flipNext();
+const prevPage = () => pageFlip && !busy && pageFlip.flipPrev();
+function goTo(n) {
+  if (!pageFlip || !pdf || isNaN(n)) return;
+  n = Math.min(Math.max(1, Math.round(n)), pdf.numPages);
+  const i = pageMap.indexOf(n);
+  if (i >= 0) pageFlip.flip(i);
 }
-
-function prevPage() {
-  if (!pdf || !pageFlip || animating || page <= 1) return;
-  pageFlip.flipPrev();
-}
-
-/* ZOOM */
-
-function changeZoom(delta) {
-  if (!pdf || animating) return;
-
-  scale = Math.max(
-    .7,
-    Math.min(1.8, scale + delta)
-  );
-
+function zoomBy(d) {
+  if (!pdf || busy) return;
+  scale = Math.max(.7, Math.min(2, +(scale + d).toFixed(2)));
   renderBook();
 }
 
-prevBtn.addEventListener("click", prevPage);
-nextBtn.addEventListener("click", nextPage);
+prevBtns.forEach(b => b.onclick = prevPage);
+nextBtns.forEach(b => b.onclick = nextPage);
+$("zoomIn").onclick = () => zoomBy(.1);
+$("zoomOut").onclick = () => zoomBy(-.1);
+$("zoomReset").onclick = () => { if (pdf && !busy) { scale = 1; renderBook(); } };
+scrub.oninput = () => { pageInput.value = scrub.value; };
+scrub.onchange = () => goTo(+scrub.value);
+pageInput.onfocus = () => pageInput.select();
+pageInput.onkeydown = e => { if (e.key === "Enter") { goTo(parseInt(pageInput.value, 10)); pageInput.blur(); } e.stopPropagation(); };
+pageInput.onblur = () => { if (pdf) onIndex(Math.max(0, pageMap.indexOf(page))); };
+$("menuBtn").onclick = () => document.body.classList.toggle("closed");
+$("scrim").onclick = () => document.body.classList.add("closed");
+$("fullscreenBtn").onclick = async () => {
+  try { document.fullscreenElement ? await document.exitFullscreen() : await document.documentElement.requestFullscreen(); }
+  catch (e) { console.error(e); }
+};
 
-zoomIn.addEventListener("click", () => {
-  changeZoom(.1);
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT" && e.target.type !== "range") return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key;
+  if (k === "ArrowRight" || k === " ") { e.preventDefault(); nextPage(); }
+  else if (k === "ArrowLeft") { e.preventDefault(); prevPage(); }
+  else if (k === "Home") { e.preventDefault(); goTo(1); }
+  else if (k === "End") { e.preventDefault(); goTo(pdf?.numPages); }
+  else if (k === "+" || k === "=") zoomBy(.1);
+  else if (k === "-") zoomBy(-.1);
+  else if (k === "0") { scale = 1; pdf && renderBook(); }
+  else if (k.toLowerCase() === "f") $("fullscreenBtn").click();
+  else if (k.toLowerCase() === "g") { e.preventDefault(); pageInput.focus(); }
 });
-
-zoomOut.addEventListener("click", () => {
-  changeZoom(-.1);
-});
-
-zoomReset.addEventListener("click", () => {
-  if (!pdf || animating) return;
-
-  scale = 1;
-  renderBook();
-});
-
-/* FULLSCREEN */
-
-fullscreenBtn.addEventListener("click", async () => {
-  try {
-    if (!document.fullscreenElement) {
-      await document.documentElement.requestFullscreen();
-    } else {
-      await document.exitFullscreen();
-    }
-  } catch (error) {
-    console.error("Fullscreen unavailable:", error);
-  }
-});
-
-/* KEYBOARD */
-
-document.addEventListener("keydown", event => {
-  if (
-    ["INPUT", "TEXTAREA"].includes(
-      document.activeElement?.tagName
-    )
-  ) {
-    return;
-  }
-
-  if (event.key === "ArrowRight" || event.key === " ") {
-    event.preventDefault();
-    nextPage();
-  }
-
-  if (event.key === "ArrowLeft") {
-    event.preventDefault();
-    prevPage();
-  }
-
-  if (event.key === "+" || event.key === "=") {
-    changeZoom(.1);
-  }
-
-  if (event.key === "-") {
-    changeZoom(-.1);
-  }
-
-  if (event.key.toLowerCase() === "f") {
-    fullscreenBtn.click();
-  }
-});
-
-/* TOUCH SWIPE */
-
-let touchStartX = null;
-
-stage.addEventListener("touchstart", event => {
-  touchStartX = event.changedTouches[0].clientX;
-}, { passive: true });
-
-stage.addEventListener("touchend", event => {
-  if (touchStartX === null) return;
-
-  const delta =
-    event.changedTouches[0].clientX - touchStartX;
-
-  touchStartX = null;
-
-  if (Math.abs(delta) > 50) {
-    delta < 0 ? nextPage() : prevPage();
-  }
-}, { passive: true });
-
-/* RESIZE */
 
 let resizeTimer;
-window.addEventListener("resize", () => {
+addEventListener("resize", () => {
   if (!pdf) return;
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => renderBook(), 180);
+  resizeTimer = setTimeout(renderBook, 200);
 });
-
-/* START */
 
 initialize();
 </script>
-
 </body>
 </html>
